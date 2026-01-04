@@ -1,6 +1,6 @@
 # Database Schema Diagram
 
-![Database Schema](diagrams/er-diagram.png)
+![Database Schema](./diagrams/Entity_Relationship_Diagram.png)
 # Architectural Diagram
 
 Below is the architectural diagram for the project:
