@@ -18,55 +18,24 @@ This document provides a deep dive into the architecture of Allma Studio, explai
 
 Allma Studio follows a **microservices-inspired monolith** architecture, where the application is structured as independent services but deployed as a single unit. This provides the benefits of clean separation while avoiding the complexity of distributed systems.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           ALLMA STUDIO SYSTEM                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────┐       ┌─────────────────────────────────────────────────┐  │
-│  │   Client    │       │              Backend Services                   │  │
-│  │   (React)   │◄─────►│  ┌─────────────────────────────────────────┐   │  │
-│  │             │ HTTP  │  │            API Gateway (FastAPI)         │   │  │
-│  │  ┌───────┐  │       │  │  ┌─────────┐ ┌─────────┐ ┌──────────┐   │   │  │
-│  │  │ Vite  │  │       │  │  │ /chat   │ │ /rag    │ │ /models  │   │   │  │
-│  │  │  SPA  │  │       │  │  └────┬────┘ └────┬────┘ └────┬─────┘   │   │  │
-│  │  └───────┘  │       │  │       │           │           │         │   │  │
-│  │             │       │  │       └───────────┼───────────┘         │   │  │
-│  │  ┌───────┐  │       │  │                   ▼                     │   │  │
-│  │  │Tailw- │  │       │  │  ┌─────────────────────────────────┐   │   │  │
-│  │  │ ind   │  │       │  │  │         ORCHESTRATOR            │   │   │  │
-│  │  └───────┘  │       │  │  │   (Central Coordinator)         │   │   │  │
-│  └─────────────┘       │  │  └─────────────────────────────────┘   │   │  │
-│                        │  │                   │                     │   │  │
-│                        │  │     ┌─────────────┼─────────────┐       │   │  │
-│                        │  │     ▼             ▼             ▼       │   │  │
-│                        │  │ ┌───────┐   ┌───────────┐   ┌───────┐  │   │  │
-│                        │  │ │  RAG  │   │Conversation│   │Document│  │   │  │
-│                        │  │ │Service│   │  Service   │   │Service │  │   │  │
-│                        │  │ └───┬───┘   └───────────┘   └───┬───┘  │   │  │
-│                        │  │     │                           │       │   │  │
-│                        │  │     └───────────┬───────────────┘       │   │  │
-│                        │  │                 ▼                       │   │  │
-│                        │  │     ┌─────────────────────────┐         │   │  │
-│                        │  │     │   Vector Store Service  │         │   │  │
-│                        │  │     │       (ChromaDB)        │         │   │  │
-│                        │  │     └─────────────────────────┘         │   │  │
-│                        │  └─────────────────────────────────────────┘   │  │
-│                        │                     │                           │  │
-│                        └─────────────────────┼───────────────────────────┘  │
-│                                              │                              │
-│                                              ▼                              │
-│                        ┌─────────────────────────────────────────────────┐  │
-│                        │               Ollama Server                     │  │
-│                        │  ┌─────────────────────────────────────────┐   │  │
-│                        │  │           Local LLM Models              │   │  │
-│                        │  │  • deepseek-r1  • gemma2:9b  • llama3   │   │  │
-│                        │  │  • nomic-embed-text (embeddings)        │   │  │
-│                        │  └─────────────────────────────────────────┘   │  │
-│                        └─────────────────────────────────────────────────┘  │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<div align="center">
+
+![System Architecture](../diagrams/architecture-diagram.jpg)
+
+*High-level system architecture showing component interactions*
+
+</div>
+
+**Key Components:**
+
+| Layer | Technology | Responsibility |
+|-------|------------|----------------|
+| Frontend | React + Vite | User interface, API communication |
+| API Gateway | FastAPI | Request routing, validation, CORS |
+| Orchestrator | Python | Service coordination, business logic |
+| Services | Python async | Domain-specific operations |
+| Vector Store | ChromaDB | Embedding storage and similarity search |
+| LLM Runtime | Ollama | Local model inference |
 
 ---
 
@@ -264,87 +233,60 @@ export async function sendMessage(message, useRag) {
 
 ## Data Flow
 
-### Chat Flow (Without RAG)
+### RAG Implementation Architecture
 
-```
-┌────────┐     ┌─────────┐     ┌──────────────┐     ┌─────────┐     ┌────────┐
-│  User  │────►│ Frontend│────►│   Backend    │────►│ Ollama  │────►│  LLM   │
-│        │     │         │     │              │     │         │     │        │
-│ Types  │     │ Sends   │     │ Orchestrator │     │ /api/   │     │Generates│
-│Message │     │ Request │     │ coordinates  │     │ generate│     │Response │
-└────────┘     └─────────┘     └──────────────┘     └─────────┘     └────────┘
-    ▲                                                                    │
-    │                                                                    │
-    │              ◄─────────── Streaming Response ◄────────────────────┘
-    │
-    └───────── Display in UI
-```
+<div align="center">
 
-### Chat Flow (With RAG)
+![RAG Implementation Architecture](../diagrams/RAG_Implementation_Architecture_Diagram.jpg)
 
-```
-┌────────┐     ┌─────────┐     ┌──────────────┐
-│  User  │────►│ Frontend│────►│   Backend    │
-│        │     │         │     │              │
-│ Types  │     │ Sends   │     │ Orchestrator │
-│Message │     │ Request │     │              │
-└────────┘     └─────────┘     └──────┬───────┘
-                                      │
-                          ┌───────────┴───────────┐
-                          ▼                       ▼
-                   ┌────────────┐          ┌────────────┐
-                   │ RAGService │          │Conversation│
-                   │            │          │  Service   │
-                   └─────┬──────┘          └────────────┘
-                         │
-            ┌────────────┼────────────┐
-            ▼            ▼            ▼
-      ┌──────────┐ ┌──────────┐ ┌──────────┐
-      │  Embed   │ │  Search  │ │ Rerank   │
-      │  Query   │ │ ChromaDB │ │ Results  │
-      └──────────┘ └──────────┘ └──────────┘
-            │            │            │
-            └────────────┼────────────┘
-                         ▼
-                  ┌────────────┐
-                  │ Build      │
-                  │ Context    │
-                  └─────┬──────┘
-                        │
-                        ▼
-                 ┌────────────┐
-                 │   Ollama   │
-                 │   LLM      │◄─── Context + Query
-                 └─────┬──────┘
-                       │
-                       ▼
-              Streaming Response with Sources
-                       │
-                       ▼
-                  ┌─────────┐
-                  │ Frontend│
-                  │ Display │
-                  └─────────┘
-```
+*Complete RAG pipeline showing query processing through response generation*
 
-### Document Ingestion Flow
+</div>
 
-```
-┌──────────┐     ┌─────────────┐     ┌─────────────────────────────────────┐
-│  User    │     │   Backend   │     │           Processing Pipeline       │
-│ Uploads  │────►│   /rag/     │────►│                                     │
-│  File    │     │   ingest    │     │  ┌─────────┐  ┌─────────┐  ┌─────┐ │
-└──────────┘     └─────────────┘     │  │ Parse   │─►│ Chunk   │─►│Embed│ │
-                                     │  │ Document│  │ Text    │  │Text │ │
-                                     │  └─────────┘  └─────────┘  └──┬──┘ │
-                                     │                               │    │
-                                     │                               ▼    │
-                                     │                        ┌──────────┐│
-                                     │                        │  Store   ││
-                                     │                        │ ChromaDB ││
-                                     │                        └──────────┘│
-                                     └─────────────────────────────────────┘
-```
+The RAG pipeline follows this flow:
+
+1. **Query Input**: User submits a question
+2. **Embedding**: Query converted to vector via Nomic Embed Text
+3. **Similarity Search**: ChromaDB finds relevant document chunks
+4. **Context Assembly**: Top-k results assembled into context
+5. **Prompt Augmentation**: Context injected into LLM prompt
+6. **Generation**: Ollama generates response with sources
+
+### Document Ingestion Pipeline
+
+<div align="center">
+
+![RAG Ingestion Pipeline](../diagrams/RAG_ingestion_Diagram.png)
+
+*Document processing from upload to vector storage*
+
+</div>
+
+**Ingestion Stages:**
+
+| Stage | Component | Description |
+|-------|-----------|-------------|
+| Load | DocumentService | Parse PDF, DOCX, MD, TXT, HTML, JSON, CSV |
+| Extract | TextSplitter | Extract text with metadata preservation |
+| Chunk | TextSplitter | Split into overlapping chunks (default: 1000 chars, 200 overlap) |
+| Embed | RAGService | Generate embeddings via Ollama API |
+| Store | VectorStoreService | Persist to ChromaDB with metadata |
+
+### Entity Relationships
+
+<div align="center">
+
+![Entity Relationship Diagram](../diagrams/Entity_Relationship_Diagram.png)
+
+*Data model showing relationships between entities*
+
+</div>
+
+**Key Relationships:**
+- **Document** (1) → (N) **Chunks**: Documents split for embedding
+- **Chunk** (1) → (1) **Embedding**: Each chunk has one vector
+- **Conversation** (1) → (N) **Messages**: Chat history
+- **Message** (N) → (N) **Sources**: RAG source references
 
 ---
 

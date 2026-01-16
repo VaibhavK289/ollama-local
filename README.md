@@ -1,4 +1,4 @@
-# 🤖 Allma Studio
+#  Allma Studio
 
 <div align="center">
 
@@ -21,7 +21,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#-overview)
 - [Features](#-features)
@@ -38,7 +38,7 @@
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 **Allma Studio** is a full-stack AI chat application that runs entirely on your local machine, ensuring complete privacy and data control. It combines the power of local Large Language Models (LLMs) via Ollama with Retrieval-Augmented Generation (RAG) to provide intelligent, context-aware responses based on your own documents.
 
@@ -46,38 +46,38 @@
 
 | Traditional AI Chat | Allma Studio |
 |---------------------|--------------|
-| ☁️ Data sent to cloud servers | 🔒 100% local processing |
-| 💰 Pay-per-token pricing | 💚 Free after setup |
-| 📡 Requires internet | 🖥️ Works offline |
-| 🔐 Privacy concerns | 🛡️ Your data stays yours |
-| 📄 Generic responses | 📚 RAG-powered with your docs |
+|  Data sent to cloud servers |  100% local processing |
+|  Pay-per-token pricing |  Free after setup |
+|  Requires internet |  Works offline |
+|  Privacy concerns |  Your data stays yours |
+|  Generic responses |  RAG-powered with your docs |
 
 ---
 
 ## ✨ Features
 
-### 🧠 AI Capabilities
+###  AI Capabilities
 - **Local LLM Integration** - Run powerful models like DeepSeek, Gemma, Qwen, and LLaMA locally via Ollama
 - **RAG Pipeline** - Upload documents and get AI responses grounded in your own data
 - **Smart Chunking** - Intelligent document splitting for optimal context retrieval
 - **Semantic Search** - ChromaDB-powered vector similarity search
 - **Conversation Memory** - Persistent chat history with context awareness
 
-### 🎨 User Interface
+###  User Interface
 - **Modern React UI** - Clean, responsive design with TailwindCSS
 - **Real-time Streaming** - Token-by-token response streaming for better UX
 - **Dark/Light Mode** - Automatic theme detection with manual toggle
 - **Markdown Rendering** - Rich text formatting with syntax highlighting
 - **Mobile Responsive** - Works seamlessly on all device sizes
 
-### 🛠️ Developer Experience
+###  Developer Experience
 - **FastAPI Backend** - High-performance async Python API
 - **Hot Reload** - Both frontend and backend with development hot-reload
 - **Type Safety** - Pydantic models and TypeScript-ready API
 - **Docker Ready** - One-command deployment with Docker Compose
 - **Comprehensive Logging** - Structured logging with configurable levels
 
-### 🔒 Security & Privacy
+###  Security & Privacy
 - **No Data Collection** - Zero telemetry, your data never leaves your machine
 - **CORS Protection** - Configurable cross-origin security
 - **Rate Limiting** - Built-in API rate limiting
@@ -85,74 +85,66 @@
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                              ALLMA STUDIO                                │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌──────────────────┐         ┌──────────────────────────────────────┐  │
-│  │                  │         │          FastAPI Backend             │  │
-│  │  React Frontend  │  HTTP   │  ┌─────────────────────────────────┐ │  │
-│  │  ┌────────────┐  │ ─────▶  │  │         Orchestrator            │ │  │
-│  │  │    Vite    │  │         │  │  ┌────────┐  ┌────────────────┐ │ │  │
-│  │  │    SPA     │  │         │  │  │  RAG   │  │  Conversation  │ │ │  │
-│  │  └────────────┘  │         │  │  │Service │  │    Service     │ │ │  │
-│  │  ┌────────────┐  │         │  │  └────┬───┘  └────────────────┘ │ │  │
-│  │  │ TailwindCSS│  │         │  │       │                         │ │  │
-│  │  │   UI Kit   │  │         │  │  ┌────▼───────────────────────┐ │ │  │
-│  │  └────────────┘  │         │  │  │   Document Service         │ │ │  │
-│  │                  │         │  │  │   (Parsing & Chunking)     │ │ │  │
-│  └──────────────────┘         │  │  └────────────────────────────┘ │ │  │
-│                               │  └─────────────────────────────────┘ │  │
-│                               │                                      │  │
-│                               │  ┌─────────────────────────────────┐ │  │
-│                               │  │       Vector Store Service      │ │  │
-│                               │  │  ┌───────────┐  ┌────────────┐  │ │  │
-│                               │  │  │ ChromaDB  │  │  Embeddings │  │ │  │
-│                               │  │  │  Vector   │  │   (Nomic)   │  │ │  │
-│                               │  │  │  Store    │  │             │  │ │  │
-│                               │  │  └───────────┘  └────────────┘  │ │  │
-│                               │  └─────────────────────────────────┘ │  │
-│                               └──────────────────────────────────────┘  │
-│                                              │                           │
-│                                              │ API                       │
-│                                              ▼                           │
-│                               ┌──────────────────────────────────────┐  │
-│                               │           Ollama Server              │  │
-│                               │  ┌────────────────────────────────┐  │  │
-│                               │  │   Local LLM Models             │  │  │
-│                               │  │   • deepseek-r1 • gemma2:9b    │  │  │
-│                               │  │   • qwen2.5-coder • llama3.2   │  │  │
-│                               │  └────────────────────────────────┘  │  │
-│                               └──────────────────────────────────────┘  │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+### System Architecture
 
-### Data Flow
+<div align="center">
 
-```
-User Query → Frontend → API Gateway → Orchestrator
-                                          │
-                    ┌─────────────────────┼─────────────────────┐
-                    ▼                     ▼                     ▼
-              RAG Service         Conversation          Document
-              (if enabled)          Service              Service
-                    │                     │                     │
-                    ▼                     │                     │
-              Vector Search               │                     │
-              (ChromaDB)                  │                     │
-                    │                     │                     │
-                    └─────────────────────┼─────────────────────┘
-                                          │
-                                          ▼
-                                   Ollama LLM
-                                          │
-                                          ▼
-                              Streaming Response → User
-```
+![System Architecture](diagrams/architecture-diagram.jpg)
+
+</div>
+
+The system follows a **layered architecture** with clear separation of concerns:
+
+- **Frontend Layer**: React SPA with TailwindCSS, communicates via REST API
+- **API Gateway**: FastAPI with async request handling
+- **Orchestration Layer**: Central coordinator managing all services
+- **Service Layer**: Domain-specific services (RAG, Document, Conversation, Vector Store)
+- **Data Layer**: ChromaDB for vectors, SQLite for conversations, Ollama for LLM
+
+### RAG Pipeline Architecture
+
+<div align="center">
+
+![RAG Implementation Architecture](diagrams/RAG_Implementation_Architecture_Diagram.jpg)
+
+</div>
+
+The RAG (Retrieval-Augmented Generation) pipeline implements:
+
+1. **Query Processing**: User query embedding via Nomic Embed Text
+2. **Vector Search**: Semantic similarity search in ChromaDB
+3. **Context Ranking**: Relevance scoring and filtering
+4. **Prompt Augmentation**: Context injection into LLM prompt
+5. **Response Generation**: Streaming response from Ollama
+
+### Document Ingestion Flow
+
+<div align="center">
+
+![RAG Ingestion Pipeline](diagrams/RAG_ingestion_Diagram.png)
+
+</div>
+
+Document ingestion follows these stages:
+- **Loading**: Support for TXT, MD, PDF, DOCX, HTML, JSON, CSV
+- **Extraction**: Text extraction with metadata preservation
+- **Chunking**: Intelligent splitting with overlap for context continuity
+- **Embedding**: Vector generation via Ollama embeddings API
+- **Storage**: Persistent storage in ChromaDB
+
+### Data Model
+
+<div align="center">
+
+![Entity Relationship Diagram](diagrams/Entity_Relationship_Diagram.png)
+
+</div>
+
+Key entities:
+- **Documents** → split into **Chunks** → converted to **Embeddings**
+- **Conversations** → contain **Messages** → reference **Sources**
 
 ---
 
@@ -206,7 +198,7 @@ User Query → Frontend → API Gateway → Orchestrator
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 
@@ -251,7 +243,7 @@ npm run dev
 
 ---
 
-## 📦 Installation
+##  Installation
 
 ### 1. Clone Repository
 
@@ -321,7 +313,7 @@ npm run dev
 
 ---
 
-## ⚙️ Configuration
+##  Configuration
 
 ### Environment Variables
 
@@ -531,7 +523,7 @@ For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 allma-studio/
@@ -596,7 +588,7 @@ allma-studio/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 We welcome contributions! Please follow these steps:
 
@@ -644,7 +636,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - [Ollama](https://ollama.ai/) - Local LLM runtime
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
