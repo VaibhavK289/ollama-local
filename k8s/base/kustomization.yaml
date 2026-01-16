@@ -1,0 +1,27 @@
+# =============================================================================
+# Kustomization - Base Resources
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: allma-studio
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: allma-studio
+      app.kubernetes.io/version: "1.0.0"
+    includeSelectors: false
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - pvc.yaml
+  - ollama-deployment.yaml
+  - backend-deployment.yaml
+  - frontend-deployment.yaml
+  - ingress.yaml
+
+# Common labels for all resources
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize

@@ -1,0 +1,27 @@
+# =============================================================================
+# Helm Chart - Chart.yaml
+# Allma AI Studio Helm Chart Definition
+# =============================================================================
+apiVersion: v2
+name: allma-studio
+description: A Helm chart for deploying Allma AI Studio - RAG-powered local LLM application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - llm
+  - rag
+  - ai
+  - ollama
+  - chatbot
+maintainers:
+  - name: Allma Studio
+    email: team@allma.studio
+home: https://github.com/allma-studio/allma-studio
+sources:
+  - https://github.com/allma-studio/allma-studio
+dependencies:
+  - name: ollama
+    version: ">=0.1.0"
+    repository: "https://otwld.github.io/ollama-helm/"
+    condition: ollama.enabled

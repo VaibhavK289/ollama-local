@@ -1,0 +1,48 @@
+# =============================================================================
+# Kustomization - Staging Overlay
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: allma-studio-staging
+
+resources:
+  - ../../base
+
+# Override namespace
+nameSuffix: -staging
+
+patches:
+  # Single replica for staging
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+
+  # Reduce resource limits
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 1Gi
+    target:
+      kind: Deployment
+      name: backend
+
+# Staging images (latest)
+images:
+  - name: ghcr.io/allma-studio/backend
+    newTag: develop
+  - name: ghcr.io/allma-studio/frontend
+    newTag: develop
+
+# Staging config
+configMapGenerator:
+  - name: allma-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=DEBUG
+
+commonLabels:
+  environment: staging

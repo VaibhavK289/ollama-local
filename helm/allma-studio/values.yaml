@@ -1,0 +1,184 @@
+# =============================================================================
+# Helm Chart - Default Values
+# =============================================================================
+
+# Global settings
+global:
+  imageRegistry: ghcr.io
+  imagePullSecrets: []
+
+# Namespace
+namespace: allma-studio
+
+# =============================================================================
+# Ollama Configuration
+# =============================================================================
+ollama:
+  enabled: true
+  image:
+    repository: ollama/ollama
+    tag: latest
+  resources:
+    requests:
+      memory: "8Gi"
+      cpu: "2000m"
+    limits:
+      memory: "16Gi"
+      cpu: "4000m"
+  gpu:
+    enabled: true
+    count: 1
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: ""
+  models:
+    - deepseek-r1:latest
+    - nomic-embed-text:latest
+
+# =============================================================================
+# Backend Configuration
+# =============================================================================
+backend:
+  replicaCount: 2
+  
+  image:
+    repository: allma-studio/backend
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 8000
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  persistence:
+    vectorstore:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+    database:
+      enabled: true
+      size: 5Gi
+      storageClass: ""
+  
+  config:
+    ollamaModel: "deepseek-r1:latest"
+    ollamaEmbeddingModel: "nomic-embed-text:latest"
+    logLevel: "INFO"
+  
+  livenessProbe:
+    enabled: true
+    path: /health/
+    initialDelaySeconds: 15
+    periodSeconds: 30
+  
+  readinessProbe:
+    enabled: true
+    path: /health/
+    initialDelaySeconds: 10
+    periodSeconds: 10
+
+# =============================================================================
+# Frontend Configuration
+# =============================================================================
+frontend:
+  replicaCount: 2
+  
+  image:
+    repository: allma-studio/frontend
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 80
+  
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  
+  buildArgs:
+    viteApiUrl: ""
+    viteAppName: "Allma AI Studio"
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: allma.studio
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: allma-tls
+      hosts:
+        - allma.studio
+
+# =============================================================================
+# Monitoring
+# =============================================================================
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+  
+  prometheus:
+    enabled: false
+  
+  grafana:
+    enabled: false
+    dashboards:
+      enabled: false
+
+# =============================================================================
+# Security
+# =============================================================================
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+networkPolicy:
+  enabled: true

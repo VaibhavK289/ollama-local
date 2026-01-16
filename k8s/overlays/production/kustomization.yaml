@@ -1,0 +1,59 @@
+# =============================================================================
+# Kustomization - Production Overlay
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: allma-studio
+
+resources:
+  - ../../base
+
+# Production-specific patches
+patches:
+  # Increase replicas for production
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: Deployment
+      name: backend
+  
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: Deployment
+      name: frontend
+
+  # Update HPA for production
+  - patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 3
+      - op: replace
+        path: /spec/maxReplicas
+        value: 20
+    target:
+      kind: HorizontalPodAutoscaler
+      name: backend-hpa
+
+# Production images with specific tags
+images:
+  - name: ghcr.io/allma-studio/backend
+    newTag: v1.0.0
+  - name: ghcr.io/allma-studio/frontend
+    newTag: v1.0.0
+
+# Production config overrides
+configMapGenerator:
+  - name: allma-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=WARNING
+
+# Production labels
+commonLabels:
+  environment: production

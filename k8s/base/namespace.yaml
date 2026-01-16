@@ -1,0 +1,10 @@
+# =============================================================================
+# Allma AI Studio - Kubernetes Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: allma-studio
+  labels:
+    app.kubernetes.io/name: allma-studio
+    app.kubernetes.io/managed-by: kubectl

@@ -1,0 +1,116 @@
+# =============================================================================
+# Allma AI Studio - Docker Compose (Development)
+# Local development with hot-reload and Ollama
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Ollama - Local LLM Server
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: allma-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - allma-network
+
+  # ---------------------------------------------------------------------------
+  # Backend - FastAPI Application
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./allma-backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: allma-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source for hot-reload in dev
+      - ./allma-backend:/app:cached
+      # Persist data
+      - backend_vectorstore:/app/data/vectorstore
+      - backend_processed:/app/data/processed
+      - backend_logs:/app/logs
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-deepseek-r1:latest}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
+      - VECTOR_STORE_PATH=/app/data/vectorstore
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost}
+      - DATABASE_URL=sqlite+aiosqlite:///./data/allma.db
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - allma-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend - React Development Server
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./allma-frontend
+      dockerfile: Dockerfile.dev
+    container_name: allma-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./allma-frontend:/app:cached
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    networks:
+      - allma-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  allma-network:
+    driver: bridge
+    name: allma-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  ollama_data:
+    name: allma-ollama-data
+  backend_vectorstore:
+    name: allma-vectorstore
+  backend_processed:
+    name: allma-processed
+  backend_logs:
+    name: allma-logs

@@ -1,0 +1,56 @@
+# =============================================================================
+# Allma AI Studio - Persistent Volume Claims
+# =============================================================================
+---
+# Ollama model storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models-pvc
+  namespace: allma-studio
+  labels:
+    app.kubernetes.io/name: allma-studio
+    app.kubernetes.io/component: ollama
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+
+---
+# Backend vector store
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vectorstore-pvc
+  namespace: allma-studio
+  labels:
+    app.kubernetes.io/name: allma-studio
+    app.kubernetes.io/component: backend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+# Backend database
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-pvc
+  namespace: allma-studio
+  labels:
+    app.kubernetes.io/name: allma-studio
+    app.kubernetes.io/component: backend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
