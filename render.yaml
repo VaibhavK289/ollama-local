@@ -1,0 +1,72 @@
+# =============================================================================
+# Render Blueprint - Infrastructure as Code
+# Deploy entire Allma Studio stack with one click
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend - FastAPI Application
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: allma-backend
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: allma-backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: OLLAMA_HOST
+        value: https://api.groq.com/openai/v1
+      - key: OLLAMA_MODEL
+        value: llama-3.3-70b-versatile
+      - key: OLLAMA_EMBEDDING_MODEL
+        value: nomic-embed-text:latest
+      - key: VECTOR_STORE_PATH
+        value: /opt/render/project/src/data/vectorstore
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ORIGINS
+        value: https://allma-frontend.onrender.com,http://localhost:5173
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/allma.db
+      - key: USE_CLOUD_LLM
+        value: "true"
+      - key: GROQ_API_KEY
+        sync: false  # Will prompt for value during deployment
+
+  # ---------------------------------------------------------------------------
+  # Frontend - React Static Site
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: allma-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: allma-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=31536000
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: allma-backend
+          envVarKey: RENDER_EXTERNAL_URL

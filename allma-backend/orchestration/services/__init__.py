@@ -13,6 +13,7 @@ from .vector_store_service import VectorStoreService
 from .document_service import DocumentService
 from .conversation_service import ConversationService
 from .persistent_conversation_service import PersistentConversationService
+from .cloud_llm_service import CloudLLMService, get_cloud_llm_service
 
 __all__ = [
     "RAGService",
@@ -20,4 +21,6 @@ __all__ = [
     "DocumentService",
     "ConversationService",
     "PersistentConversationService",
+    "CloudLLMService",
+    "get_cloud_llm_service",
 ]
